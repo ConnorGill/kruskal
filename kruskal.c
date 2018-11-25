@@ -34,6 +34,15 @@ typedef struct vertex
 	DA *edgeList;
 }vertex;
 
+edge * newEdge(int edgeVertex)
+{
+	edge* newEdge1 = (edge*)malloc(sizeof(edge));
+	assert(newEdge1 != 0);
+	newEdge1->weight = newINTEGER(edgeVertex);
+
+	return newEdge1;
+}
+
 void displayEDGE (void *x, FILE* fp)
 {
 	edge *y = x;
@@ -98,7 +107,7 @@ void TopDownMergeEdgeNew(void* A[], int iBegin, int iMiddle, int iEnd, void* B[]
 void CopyArrayEdgeNew(void* A[], int iBegin, int iEnd, void* B[]);
 
 
-void displayVERTEXWRAPPER(FILE *, void *);
+void displayVERTEXWRAPPER(void *, FILE *);
 int  compareVERTEXWRAPPER(void *, void*);
 int findVertexIndex2(RBT *t, int v);
 
@@ -106,7 +115,6 @@ int findVertexIndex2(RBT *t, int v);
 
 int main(int argc, char*argv[])
 {
-
 	for(int a = 1; a < argc; a++)
 	{
 		if(strcmp("-v", argv[a]) == 0)
@@ -172,14 +180,25 @@ int main(int argc, char*argv[])
 				newEdge->src = v1;
 				newEdge->dest = v2;
 
+
 				int tempIndex = sizeDA(edges);
+				for (int i = 0; i < tempIndex; i++)
+				{
+					edge* tempEdge = getDA(edges, i);
+					if (tempEdge->src == newEdge->src && tempEdge->dest == newEdge->dest)	//if already exists
+					{
+						tempEdge->weight = newEdge->weight; //update to newest weight
+					}
+				}
+
 				insertDA(edges, tempIndex, newEdge);
 
 				tempIndex = sizeDA(vertices);
-				INTEGER *iV1 = newINTEGER(v1); insertDA(vertices, tempIndex, iV1);
+				INTEGER *iV1 = newINTEGER(v1);
+				insertDA(vertices, tempIndex, iV1);
 				tempIndex = sizeDA(vertices);
-				INTEGER *iV2 = newINTEGER(v2); insertDA(vertices, tempIndex, iV2);
-
+				INTEGER *iV2 = newINTEGER(v2);
+				insertDA(vertices, tempIndex, iV2);
 			}
 
 		}
@@ -218,7 +237,8 @@ int main(int argc, char*argv[])
 	DA* sets2 = newDA();
 	setDAdisplay(sets2, displayINTEGER);
 
-	RBT *vertexTree = newRBT(displayVERTEXWRAPPER, compareVERTEXWRAPPER);
+	RBT *vertexTree = newRBT(compareVERTEXWRAPPER);
+	setRBTdisplay(vertexTree, displayVERTEXWRAPPER);
 	vertex **vertexList2 = (vertex**)malloc(sizeof(vertex*) * numVertices2);
 
 	int j = 0;
@@ -332,7 +352,6 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 		if(firstIndex > numVertices) break;
 		if(numVertices >= 1)
 		{
-
 			fprintf(fp, "%d: ", level);
 			displayVERTEX(vertexArray[firstIndex], fp);
 			vertexArray[firstIndex]->visited = true;
@@ -343,7 +362,6 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 		}
 		if(numVertices > 1)
 		{
-
 			vertex *first = vertexArray[firstIndex];
 
 			for(int j = 0; j < sizeDA(first->edgeList); j++)
@@ -362,15 +380,12 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 				vertex* currVertex = vertexArray[index];
 				vertexArray[index]->visited = true;
 
-
 				enqueue(vert, currVertex);
 			}
-
 		}
 
 		while(sizeQUEUE(breadthFirst) != 0)
 		{
-
 			int size = sizeQUEUE(breadthFirst);
 			fprintf(fp, "%d: ", level);
 
@@ -379,13 +394,10 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 			int j =0;
 			for(j = 0; j < size; j++)
 			{
-
 				edge *curr = sortedList[j];
 				vertex *currVertex = findVertex(vertexArray, curr->dest, numVertices);
 
-
 				displayEDGE(curr, fp);
-
 
 				vertex *previousVertex = findVertex(vertexArray, curr->src, numVertices);
 				int k = 0;
@@ -395,7 +407,6 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 
 					if(currEdge->src != currVertex->value)
 					{
-
 						int temp = currEdge->src;
 						currEdge->src = currEdge->dest;
 						currEdge->dest = temp;
@@ -403,15 +414,12 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 
 					if(currEdge->dest != previousVertex->value)
 					{
-
 						enqueue(breadthFirst, currEdge);
 						int index = findVertexIndex(vertexArray, currEdge->dest, numVertices);
 						vertex* currVertex = vertexArray[index];
 						vertexArray[index]->visited = true;
 						enqueue(vert, currVertex);
 					}
-
-
 
 				}
 
@@ -428,16 +436,14 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 
 int compareEDGE(void *first, void* second)
 {
-
-
 	edge *x = first;
 	edge *y = second;
+
 	if(getINTEGER(x->weight) != getINTEGER(y->weight))
 		return compareINTEGER(x->weight, y->weight);
+
 	else
 	{
-
-
 		int es1 = x->src;
 		int ed1 = x->dest;
 		int es2 = y->src;
@@ -453,11 +459,8 @@ int compareEDGE(void *first, void* second)
 		else minv2 = ed2;
 
 
-
-
 		if(minv1 == minv2)
 		{
-
 			int temp1 = 0;
 			int temp2 = 0;
 			if(es1 == minv1) temp1 = ed1;
@@ -466,12 +469,10 @@ int compareEDGE(void *first, void* second)
 			if(es2 == minv2) temp2 = ed2;
 			else temp2 = es2;
 
-
 			return(compareINTEGER(newINTEGER(temp1), newINTEGER(temp2)));
 		}
 		else
 		{
-
 			return (compareINTEGER(newINTEGER(minv1), newINTEGER(minv2)));
 		}
 	}
@@ -488,7 +489,6 @@ int compareVertex(void *first, void* second)
 
 void TopDownMergeSortEdge(edge* A[], edge* B[], int n)
 {
-
 	CopyArrayEdge(A, 0, n ,B);
 	TopDownSplitMergeEdge(B, 0, n, A);
 }
@@ -508,17 +508,12 @@ void TopDownSplitMergeEdge(edge* B[], int iBegin, int iEnd, edge* A[])
 
 void TopDownMergeEdge(edge* A[], int iBegin, int iMiddle, int iEnd, edge* B[])
 {
-
 	int i = iBegin, j = iMiddle, k = 0;
 
 	for(k = iBegin; k < iEnd; k++)
 	{
-
-		if(i < iMiddle && (j >= iEnd ||
-
-			(compareEDGE(A[i], A[j]) <= 0)))
+		if(i < iMiddle && (j >= iEnd || (compareEDGE(A[i], A[j]) <= 0)))
 			{
-
 				B[k] = A[i];
 				i++;
 			}
@@ -566,7 +561,6 @@ void TopDownMerge(int A[], int iBegin, int iMiddle, int iEnd, int B[])
 
 	for(k = iBegin; k < iEnd; k++)
 	{
-
 		if(i < iMiddle && (j >= iEnd || A[i] <= A[j]))
 		{
 			B[k] = A[i];
@@ -668,12 +662,10 @@ void TopDownSplitMergeEdge2(edge* B[], int iBegin, int iEnd, edge* A[])
 
 void TopDownMergeEdge2(edge* A[], int iBegin, int iMiddle, int iEnd, edge* B[])
 {
-
 	int i = iBegin, j = iMiddle, k = 0;
 
 	for(k = iBegin; k < iEnd; k++)
 	{
-
 		if(i < iMiddle && (j >= iEnd || (compareEDGE2(A[i], A[j]) <= 0)))
 			{
 				B[k] = A[i];
@@ -752,10 +744,7 @@ void TopDownMergeNew(void* A[], int iBegin, int iMiddle, int iEnd, void* B[])
 
 	for(k = iBegin; k < iEnd; k++)
 	{
-
-		if(i < iMiddle && (j >= iEnd ||
-			(compareINTEGER(A[i], A[j]) <= 0)))
-
+		if(i < iMiddle && (j >= iEnd ||	(compareINTEGER(A[i], A[j]) <= 0)))
 		{
 			B[k] = A[i];
 			i++;
@@ -800,23 +789,17 @@ void TopDownSplitMergeEdgeNew(void* B[], int iBegin, int iEnd, void* A[])
 
 void TopDownMergeEdgeNew(void* A[], int iBegin, int iMiddle, int iEnd, void* B[])
 {
-
 	int i = iBegin, j = iMiddle, k = 0;
 
 	for(k = iBegin; k < iEnd; k++)
 	{
-
-		if(i < iMiddle && (j >= iEnd ||
-
-			(compareEDGE(A[i], A[j]) <= 0)))
+		if(i < iMiddle && (j >= iEnd || (compareEDGE(A[i], A[j]) <= 0)))
 			{
-
 				B[k] = A[i];
 				i++;
 			}
 		else
 		{
-
 			B[k] = A[j];
 			j++;
 		}
@@ -833,7 +816,7 @@ void CopyArrayEdgeNew(void* A[], int iBegin, int iEnd, void* B[])
 }
 
 
-void displayVERTEXWRAPPER(FILE *fp, void *v)
+void displayVERTEXWRAPPER(void *v, FILE *fp)
 {
 	vertexWrapper *x = v;
 	fprintf(fp, "%d", x->value);
@@ -859,7 +842,7 @@ int findVertexIndex2(RBT *t, int v)
 
 	findNode = findRBT(t, findNode);
 
-	index = findNode->index; // index of the vertex
+	index = findNode->index;
 
 
 	return index;

@@ -52,15 +52,6 @@ vertex2 * newVertex2(unsigned rep, void* store)
 	return newVertex;
 }
 
-edge * newEdge(int edgeVertex)
-{
-	edge* newEdge = (edge*)malloc(sizeof(edge));
-	assert(newEdge != 0);
-	newEdge->weight = newINTEGER(edgeVertex);
-
-	return newEdge;
-}
-
 extern SET *newSET(void)
 {
 
@@ -128,14 +119,16 @@ extern int unionSET(SET *d,int index1,int index2)
 	{
 
 		v2Rep->repIndex = v1Rep->repIndex;
-		v2Rep->rank++;
+		v2Rep->isRep = 0;
+		//v2Rep->rank++;
 
 	}
 	else if(rank(d, v1Rep) < rank(d, v2Rep))
 	{
 
 		v1Rep->repIndex = v2Rep->repIndex;
-		v1Rep->rank++;
+		v1Rep->isRep = 0;
+		//v1Rep->rank++;
 
 	}
 	else
@@ -145,15 +138,22 @@ extern int unionSET(SET *d,int index1,int index2)
 		{
 
 			v2Rep->repIndex = v1Rep->repIndex;
-			v2Rep->rank++;
+			//v2Rep->rank++;
+			v1Rep->rank++;
+			//v2Rep->isRep = 1;
+			v2Rep->isRep = 0;
+			v1Rep->isRep = 1;
 		}
 		else
 		{
 
 			v1Rep->repIndex = v2Rep->repIndex;
-			v1Rep->rank++;
+			//v1Rep->rank++;
+			v2Rep->rank++;
+			v2Rep->isRep = 1;
+			v1Rep->isRep = 0;
+
 		}
-		v2Rep->isRep = 0;
 	}
 
 	return 1;
@@ -170,6 +170,10 @@ extern void displaySET(SET *d, FILE *fp)
 		fprintf(fp, "%d: ", i);
 		vertex2 *currVertex = getDA(d->representatives, i);
 		d->display(currVertex->value, fp);
+		if(currVertex->isRep == 1)
+		{
+			fprintf(fp, "(%d)", currVertex->rank);
+		}
 		while(currVertex->index != currVertex->repIndex)
 		{
 
@@ -178,10 +182,6 @@ extern void displaySET(SET *d, FILE *fp)
 			fprintf(fp, " ");
 			d->display(currVertex->value, fp);
 
-		}
-		if(currVertex->isRep == 1)
-		{
-			fprintf(fp, "(%d)", currVertex->rank);
 		}
 		fprintf(fp, "\n");
 	}
@@ -210,9 +210,11 @@ extern void  freeSET(SET *d)
     free(d);
     return;
   }
+
 	for(int i = 0; i < sizeDA(d->representatives); i++)
 	{
 		vertex2 *currVertex = getDA(d->representatives, i);
+		free(currVertex->value);
 		free(currVertex);
 	}
 
