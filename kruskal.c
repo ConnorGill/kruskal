@@ -71,7 +71,7 @@ void displayVERTEX(void* x, FILE *fp)
 
 
 
-void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices);
+void displayGRAPH(FILE *fp, vertex **vertexArray, int numVertices);
 int compareEDGE(void *, void*);
 int compareEDGE2(void *, void*);
 
@@ -185,7 +185,8 @@ int main(int argc, char*argv[])
 				for (int i = 0; i < tempIndex; i++)
 				{
 					edge* tempEdge = getDA(edges, i);
-					if (tempEdge->src == newEdge->src && tempEdge->dest == newEdge->dest)	//if already exists
+					if ((tempEdge->src == newEdge->src && tempEdge->dest == newEdge->dest)
+						|| (tempEdge->src == newEdge->dest && tempEdge->dest == newEdge->src))	//if already exists
 					{
 						tempEdge->weight = newEdge->weight; //update to newest weight
 					}
@@ -309,7 +310,7 @@ int main(int argc, char*argv[])
 		}
 	}
 
-	displayGRAPH(stdout, numSets, vertexList2, numVertices3);
+	displayGRAPH(stdout, vertexList2, numVertices3);
 
 	if(inputFile)
 		fclose(inputFile);
@@ -317,19 +318,23 @@ int main(int argc, char*argv[])
 }
 
 
-void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
+void displayGRAPH(FILE *fp, vertex **vertexArray, int numVertices)
 {
+	if(numVertices <= 1)
+	{
+		fprintf(fp, "EMPTY\n");
+		return;
+	}
 
 	int i = 0;
+	int tracker = numVertices;		//keeps track of remaining verts
 	for(i = 0; i < numVertices; i++)
 	{
-		vertexArray[i]->visited = false;
+		vertexArray[i]->visited = false;	//reset all vertices to false
 
 	}
 
 
-	for(i = 0; i < numSets; i++)
-	{
 		int totalWeight = 0;
 
 		int level = 0;
@@ -349,11 +354,12 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 				nonVisitedCount++;
 		}
 
-		if(firstIndex > numVertices) break;
-		if(numVertices >= 1)
+		if(firstIndex > numVertices) return;
+		if(tracker > 1)	//If at least one vertice is present
 		{
 			fprintf(fp, "%d: ", level);
 			displayVERTEX(vertexArray[firstIndex], fp);
+			tracker--;
 			vertexArray[firstIndex]->visited = true;
 			printf("\n");
 
@@ -384,35 +390,36 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 			}
 		}
 
-		while(sizeQUEUE(breadthFirst) != 0)
+		while(sizeQUEUE(breadthFirst) != 0)	//BFS search of vertices
 		{
 			int size = sizeQUEUE(breadthFirst);
+			//fprintf(fp, "TESTING2\n");
 			fprintf(fp, "%d: ", level);
 
 			edge **sortedList = sortEdges(breadthFirst);
 
 			int j =0;
-			for(j = 0; j < size; j++)
+			for(j = 0; j < size; j++)	//
 			{
 				edge *curr = sortedList[j];
 				vertex *currVertex = findVertex(vertexArray, curr->dest, numVertices);
 
 				displayEDGE(curr, fp);
-
+				tracker--;	//one less vert
 				vertex *previousVertex = findVertex(vertexArray, curr->src, numVertices);
 				int k = 0;
 				for(k = 0; k < sizeDA(currVertex->edgeList); k++)
 				{
 					edge *currEdge = getDA(currVertex->edgeList, k);
 
-					if(currEdge->src != currVertex->value)
+					if(currEdge->src != currVertex->value)	//set currEdges vals
 					{
 						int temp = currEdge->src;
 						currEdge->src = currEdge->dest;
 						currEdge->dest = temp;
 					}
 
-					if(currEdge->dest != previousVertex->value)
+					if(currEdge->dest != previousVertex->value)	//if next vertices is not same as last
 					{
 						enqueue(breadthFirst, currEdge);
 						int index = findVertexIndex(vertexArray, currEdge->dest, numVertices);
@@ -423,14 +430,18 @@ void displayGRAPH(FILE *fp, int numSets, vertex **vertexArray, int numVertices)
 
 				}
 
-				totalWeight += getINTEGER(curr->weight);
+				totalWeight += getINTEGER(curr->weight);	//calculate final weight
 				if(j < (size-1)) fprintf(fp, " ");
 				else fprintf(fp, "\n");
 			}
 			level++;
 		}
-		fprintf(fp, "weight: %d\n", totalWeight);
-	}
+		if (totalWeight > 0)
+		{
+				fprintf(fp, "weight: %d\n", totalWeight);
+		}
+
+
 
 }
 
